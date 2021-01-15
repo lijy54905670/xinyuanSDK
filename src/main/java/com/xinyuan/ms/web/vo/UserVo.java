@@ -12,7 +12,7 @@ import java.util.Date;
  */
 @Data
 
-public class UserVo  {
+public class UserVo{
 
     @ApiModelProperty(value = "主键", name = "id", example = "0")
     private Long id;
