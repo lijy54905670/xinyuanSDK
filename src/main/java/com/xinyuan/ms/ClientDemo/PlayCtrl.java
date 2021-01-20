@@ -9,7 +9,7 @@ import com.sun.jna.win32.StdCallLibrary;
 
 public interface PlayCtrl extends StdCallLibrary
 {
-    PlayCtrl INSTANCE = (PlayCtrl) Native.loadLibrary("C:\\Users\\yaoli\\Desktop\\springBoot-template\\template\\PlayCtrl.dll",
+    PlayCtrl INSTANCE = (PlayCtrl) Native.loadLibrary("E:\\IDEAProject\\xinyuanSDK\\PlayCtrl.dll",
             PlayCtrl.class);
 
     public static final int STREAME_REALTIME = 0;

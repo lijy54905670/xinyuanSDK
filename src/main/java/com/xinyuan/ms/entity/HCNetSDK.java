@@ -34,7 +34,7 @@ import lombok.Data;
 //SDK接口说明,HCNetSDK.dll
 public interface HCNetSDK extends StdCallLibrary {
 
-    HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("C:\\Users\\yaoli\\Desktop\\springBoot-template\\template\\HCNetSDK.dll",
+    HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("E:\\IDEAProject\\xinyuanSDK\\HCNetSDK.dll",
             HCNetSDK.class);
     /***宏定义***/
     //常量
@@ -3062,7 +3062,7 @@ public static class RECV_ALARM extends Structure{
 //播放库函数声明,PlayCtrl.dll
 interface PlayCtrl extends StdCallLibrary
 {
-    PlayCtrl INSTANCE = (PlayCtrl) Native.loadLibrary("C:\\Users\\yaoli\\Desktop\\springBoot-template\\template\\PlayCtrl.dll",
+    PlayCtrl INSTANCE = (PlayCtrl) Native.loadLibrary("E:\\IDEAProject\\xinyuanSDK\\PlayCtrl.dll",
             PlayCtrl.class);
 
     public static final int STREAME_REALTIME = 0;

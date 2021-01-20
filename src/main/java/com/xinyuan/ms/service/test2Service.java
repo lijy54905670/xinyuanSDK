@@ -2,7 +2,8 @@ package com.xinyuan.ms.service;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
-import org.junit.platform.commons.logging.LoggerFactory;
+import com.xinyuan.ms.entity.Test;
+import com.xinyuan.ms.mapper.TestRepository;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -17,7 +18,7 @@ import java.util.Random;
 import java.util.logging.Logger;
 
 @Service
-public class test2Service {
+public class test2Service extends BaseService<TestRepository, Test, Long>{
     static HCNetSDK hCNetSDK = HCNetSDK.INSTANCE;
     static String m_sUsername = "admin";//设备用户名
     static String m_sPassword = "12345ABCDE";//设备密码
@@ -119,6 +120,11 @@ public class test2Service {
                     Pointer pVcaInfo = strVcaAlarm.getPointer();
                     pVcaInfo.write(0, pAlarmInfo.getByteArray(0, strVcaAlarm.size()), 0, strVcaAlarm.size());
                     strVcaAlarm.read();
+                    Test abc = new Test();
+                    abc.setInPerson(0);
+                    abc.setOutPerson(0);
+                    abc.setTime(imgName);
+                    save(abc);
 
                     switch (strVcaAlarm.struRuleInfo.wEventTypeEx) {
                         case 1:
