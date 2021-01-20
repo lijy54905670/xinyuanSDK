@@ -6,7 +6,9 @@ import org.junit.platform.commons.logging.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -38,7 +40,7 @@ public class test2Service {
             System.out.println("初始化失败");
         }
         //设置连接时间与重连时间
-        hCNetSDK.NET_DVR_SetConnectTime(2000, 1);
+        hCNetSDK.NET_DVR_SetConnectTime(20000, 1);
         hCNetSDK.NET_DVR_SetReconnect(100000, true);
         //设备信息, 输出参数
         HCNetSDK.NET_DVR_DEVICEINFO_V40 m_strDeviceInfo = new HCNetSDK.NET_DVR_DEVICEINFO_V40();
@@ -99,11 +101,10 @@ public class test2Service {
         try {
             String sAlarmType = new String();
             String[] newRow = new String[3];
+            Date today = new Date();
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmss");
-            String imgName = sf.format(new Date()) + ".jpg";
-            String clImgName = "cl" + sf.format(new Date()) + ".jpg";
             String[] sIP = new String[2];
+
             System.out.println(lCommand);
             if (lCommand != 4432) {
                 System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -121,26 +122,14 @@ public class test2Service {
                     strVcaAlarm.read();
 
                     switch (strVcaAlarm.struRuleInfo.wEventTypeEx) {
+                        case 41:
+                            System.out.println("人员滞留");
+                            break;
+                        case 15:
+                            System.out.println("人员离岗");
+                            break;
                         case 1:
-                            sAlarmType = sAlarmType + new String("：穿越警戒面") + "，" +
-                                    "_wPort:" + strVcaAlarm.struDevInfo.wPort +
-                                    "_byChannel:" + strVcaAlarm.struDevInfo.byChannel +
-                                    "_byIvmsChannel:" + strVcaAlarm.struDevInfo.byIvmsChannel +
-                                    "_Dev IP：" + new String(strVcaAlarm.struDevInfo.struDevIP.sIpV4);
-                            break;
-                        case 2:
-                            sAlarmType = sAlarmType + new String("：目标进入区域") + "，" +
-                                    "_wPort:" + strVcaAlarm.struDevInfo.wPort +
-                                    "_byChannel:" + strVcaAlarm.struDevInfo.byChannel +
-                                    "_byIvmsChannel:" + strVcaAlarm.struDevInfo.byIvmsChannel +
-                                    "_Dev IP：" + new String(strVcaAlarm.struDevInfo.struDevIP.sIpV4);
-                            break;
-                        case 3:
-                            sAlarmType = sAlarmType + new String("：目标离开区域") + "，" +
-                                    "_wPort:" + strVcaAlarm.struDevInfo.wPort +
-                                    "_byChannel:" + strVcaAlarm.struDevInfo.byChannel +
-                                    "_byIvmsChannel:" + strVcaAlarm.struDevInfo.byIvmsChannel +
-                                    "_Dev IP：" + new String(strVcaAlarm.struDevInfo.struDevIP.sIpV4);
+                            System.out.println("人员越界");
                             break;
                         default:
                             sAlarmType = sAlarmType + new String("：其他行为分析报警，事件类型：")
@@ -151,6 +140,43 @@ public class test2Service {
                                     "_Dev IP：" + new String(strVcaAlarm.struDevInfo.struDevIP.sIpV4);
                             break;
                     }
+
+                    System.out.println(sAlarmType+"     123");
+                    newRow[0] = dateFormat.format(today);
+                    //报警类型
+                    newRow[1] = sAlarmType;
+                    //报警设备IP地址
+                    sIP = new String(pAlarmer.sDeviceIP).split("\0", 2);
+                    newRow[2] = sIP[0];
+
+                    if(strVcaAlarm.dwPicDataLen>0)
+                    {
+                        SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmss");
+                        String newName = sf.format(new Date());
+                        FileOutputStream fout;
+                        try {
+                            fout = new FileOutputStream("C:\\Users\\yaoli\\Desktop\\pic\\"+ new String(pAlarmer.sDeviceIP).trim()
+                                    + "wEventTypeEx[" + strVcaAlarm.struRuleInfo.wEventTypeEx + "]_"+ newName +"_vca.jpg");
+                            //将字节写入文件
+                            long offset = 0;
+                            ByteBuffer buffers = strVcaAlarm.pImage.getByteBuffer(offset, strVcaAlarm.dwPicDataLen);
+                            byte [] bytes = new byte[strVcaAlarm.dwPicDataLen];
+                            buffers.rewind();
+                            buffers.get(bytes);
+                            fout.write(bytes);
+                            fout.close();
+                        }catch (FileNotFoundException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
+
+
+
+
                     break;
 
             }
