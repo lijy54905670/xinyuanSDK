@@ -8,22 +8,26 @@ import javax.persistence.*;
 import static javax.persistence.GenerationType.IDENTITY;
 @Data
 @Entity
-@Table(name = "sys_test")
+@Table(name = "sys_test1")
 public class Test {
     @Id
     @ApiModelProperty(value = "主键", name = "id", example = "0")
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
-    @ApiModelProperty(value = "进入人数", name = "inPerson", example = "1")
-    @Column(name = "inPerson")
-    private int inPerson;
+    @ApiModelProperty(value = "ip地址", name = "ipAddress", example = "1")
+    @Column(name = "ipAddress")
+    private String ipAddress;
 
-    @ApiModelProperty(value = "离开人数", name = "outPerson", example = "1")
-    @Column(name = "outPerson")
-    private int outPerson;
+    @ApiModelProperty(value = "通道号", name = "channel", example = "1")
+    @Column(name = "channel")
+    private byte channel;
 
     @ApiModelProperty(value = "记录时间", name = "time", example = "1")
     @Column(name = "time")
     private String time;
+
+    @ApiModelProperty(value = "事件类型", name = "type", example = "1")
+    @Column(name = "type")
+    private String type;
 }

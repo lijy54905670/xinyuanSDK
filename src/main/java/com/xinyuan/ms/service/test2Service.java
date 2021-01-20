@@ -92,6 +92,7 @@ public class test2Service extends BaseService<TestRepository, Test, Long>{
         lListenHandle = hCNetSDK.NET_DVR_StartListen_V30(m_sListenIP, (short) iListenPort, this::MsesGCallBack, null);
         if (lListenHandle < 0) {
 //            JOptionPane.showMessageDialog(null, "启动监听失败，错误号:" +  hCNetSDK.NET_DVR_GetLastError());
+            System.out.println("监听失败");
         } else {
             System.out.println("启动监听成功");
         }
@@ -104,6 +105,7 @@ public class test2Service extends BaseService<TestRepository, Test, Long>{
             String[] newRow = new String[3];
             Date today = new Date();
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            String format = dateFormat.format(today);
             String[] sIP = new String[2];
 
             System.out.println(lCommand);
@@ -122,10 +124,8 @@ public class test2Service extends BaseService<TestRepository, Test, Long>{
                     pVcaInfo.write(0, pAlarmInfo.getByteArray(0, strVcaAlarm.size()), 0, strVcaAlarm.size());
                     strVcaAlarm.read();
                     Test abc = new Test();
-                    abc.setInPerson(0);
-                    abc.setOutPerson(0);
-                    abc.setTime(imgName);
-                    save(abc);
+                    abc.setTime(format);
+
 
                     switch (strVcaAlarm.struRuleInfo.wEventTypeEx) {
                         case 41:
@@ -144,6 +144,7 @@ public class test2Service extends BaseService<TestRepository, Test, Long>{
                                     "_byChannel:" + strVcaAlarm.struDevInfo.byChannel +
                                     "_byIvmsChannel:" + strVcaAlarm.struDevInfo.byIvmsChannel +
                                     "_Dev IP：" + new String(strVcaAlarm.struDevInfo.struDevIP.sIpV4);
+                            save(abc);
                             break;
                     }
 
@@ -158,10 +159,10 @@ public class test2Service extends BaseService<TestRepository, Test, Long>{
                     if(strVcaAlarm.dwPicDataLen>0)
                     {
                         SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmss");
-                        String newName = sf.format(new Date());
+                        String newName = sf.format(today);
                         FileOutputStream fout;
                         try {
-                            fout = new FileOutputStream("C:\\Users\\yaoli\\Desktop\\pic\\"+ new String(pAlarmer.sDeviceIP).trim()
+                            fout = new FileOutputStream("E:\\hkwsPicture\\"+ new String(pAlarmer.sDeviceIP).trim()
                                     + "wEventTypeEx[" + strVcaAlarm.struRuleInfo.wEventTypeEx + "]_"+ newName +"_vca.jpg");
                             //将字节写入文件
                             long offset = 0;
