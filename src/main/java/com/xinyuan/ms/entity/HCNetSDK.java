@@ -34,7 +34,7 @@ import lombok.Data;
 //SDK接口说明,HCNetSDK.dll
 public interface HCNetSDK extends StdCallLibrary {
 
-    HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("C:\\Users\\yaoli\\Desktop\\springBoot-template\\template\\HCNetSDK.dll",
+    HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("E:\\IDEAProject\\xinyuanSDK\\HCNetSDK.dll",
             HCNetSDK.class);
     /***宏定义***/
     //常量

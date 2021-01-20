@@ -35,13 +35,13 @@ import org.springframework.stereotype.Component;
 //SDK接口说明,HCNetSDK.dll
 public interface HCNetSDK extends StdCallLibrary {
 
-    HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("C:\\Users\\yaoli\\Desktop\\springBoot-template\\template\\HCNetSDK.dll",
+    HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("E:\\IDEAProject\\xinyuanSDK\\HCNetSDK.dll",
             HCNetSDK.class);
     /***宏定义***/
     //常量
 
     public static final int MAX_NAMELEN = 16;	//DVR本地登陆名
-    public static final int MAX_RIGHT = 32;	//设备支持的权限（1-12表示本地权限，13-32表示远程权限）
+    int MAX_RIGHT = 32;	//设备支持的权限（1-12表示本地权限，13-32表示远程权限）
     public static final int NAME_LEN = 32;    //用户名长度
     public static final int PASSWD_LEN = 16;    //密码长度
     public static final int SERIALNO_LEN = 48;   //序列号长度
