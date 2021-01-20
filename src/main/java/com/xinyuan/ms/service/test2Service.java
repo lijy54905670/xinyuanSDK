@@ -2,8 +2,7 @@ package com.xinyuan.ms.service;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
-import com.xinyuan.ms.entity.Test;
-import com.xinyuan.ms.mapper.TestRepository;
+import org.junit.platform.commons.logging.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -19,8 +18,10 @@ import java.util.Map;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import static com.xinyuan.ms.service.HCNetSDK.COMM_ALARM_RULE;
+
 @Service
-public class test2Service extends BaseService<TestRepository, Test, Long>{
+public class test2Service {
     static HCNetSDK hCNetSDK = HCNetSDK.INSTANCE;
     static String m_sUsername = "admin";//设备用户名
     static String m_sPassword = "12345ABCDE";//设备密码
@@ -60,7 +61,7 @@ public class test2Service extends BaseService<TestRepository, Test, Long>{
         //设备信息, 输出参数
         int lUserID = hCNetSDK.NET_DVR_Login_V40(m_strLoginInfo, m_strDeviceInfo);
         if (lUserID < 0) {
-            System.out.println("hCNetSDK.NET_DVR_Login_V30()" + "\n" + hCNetSDK.NET_DVR_GetErrorMsg(null));
+            System.out.println("hCNetSDK.NET_DVR_Login_V30()  " + "\n" + hCNetSDK.NET_DVR_GetErrorMsg(null));
             hCNetSDK.NET_DVR_Cleanup();
             return;
         }
@@ -83,7 +84,7 @@ public class test2Service extends BaseService<TestRepository, Test, Long>{
             hCNetSDK.NET_DVR_Cleanup();
             return;
         }
-        System.out.println("布防成功,开始监测车辆");
+        System.out.println("布防成功,开始监测抓拍");
 
         //启动监听----------------------------------------------
         int iListenPort = 8000;
@@ -92,50 +93,42 @@ public class test2Service extends BaseService<TestRepository, Test, Long>{
         lListenHandle = hCNetSDK.NET_DVR_StartListen_V30(m_sListenIP, (short) iListenPort, this::MsesGCallBack, null);
         if (lListenHandle < 0) {
 //            JOptionPane.showMessageDialog(null, "启动监听失败，错误号:" +  hCNetSDK.NET_DVR_GetLastError());
-            System.out.println("监听失败");
         } else {
             System.out.println("启动监听成功");
         }
     }
 
     public boolean MsesGCallBack(int lCommand, HCNetSDK.NET_DVR_ALARMER pAlarmer, Pointer pAlarmInfo, int dwBufLen, Pointer pUser) {
-        System.out.println("监听开始11111111111111111");
+        System.out.println("监听开始抓拍");
         try {
             String sAlarmType = new String();
             String[] newRow = new String[3];
             Date today = new Date();
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-            String format = dateFormat.format(today);
             String[] sIP = new String[2];
-
-            System.out.println(lCommand);
-            if (lCommand != 4432) {
-                System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-            }
-            if (lCommand == 0x1102) {
-                System.out.println("hahahahahahahah");
-            }
             switch (lCommand) {
 
-                case 0x1102:    //交通抓拍的终端图片上传
+                case COMM_ALARM_RULE:    //行为分析信息上传
+                    System.out.println("抓拍成功！");
                     HCNetSDK.NET_VCA_RULE_ALARM strVcaAlarm = new HCNetSDK.NET_VCA_RULE_ALARM();
                     strVcaAlarm.write();
                     Pointer pVcaInfo = strVcaAlarm.getPointer();
                     pVcaInfo.write(0, pAlarmInfo.getByteArray(0, strVcaAlarm.size()), 0, strVcaAlarm.size());
                     strVcaAlarm.read();
-                    Test abc = new Test();
-                    abc.setTime(format);
-
+                    String type = "OTHER";
 
                     switch (strVcaAlarm.struRuleInfo.wEventTypeEx) {
                         case 41:
                             System.out.println("人员滞留");
+                            type = "RETENTION";
                             break;
                         case 15:
                             System.out.println("人员离岗");
+                            type = "ABSENCE";
                             break;
                         case 1:
                             System.out.println("人员越界");
+                            type = "LINEDETECT";
                             break;
                         default:
                             sAlarmType = sAlarmType + new String("：其他行为分析报警，事件类型：")
@@ -144,11 +137,10 @@ public class test2Service extends BaseService<TestRepository, Test, Long>{
                                     "_byChannel:" + strVcaAlarm.struDevInfo.byChannel +
                                     "_byIvmsChannel:" + strVcaAlarm.struDevInfo.byIvmsChannel +
                                     "_Dev IP：" + new String(strVcaAlarm.struDevInfo.struDevIP.sIpV4);
-                            save(abc);
                             break;
                     }
 
-                    System.out.println(sAlarmType+"     123");
+                    System.out.println(sAlarmType + "     123");
                     newRow[0] = dateFormat.format(today);
                     //报警类型
                     newRow[1] = sAlarmType;
@@ -156,41 +148,43 @@ public class test2Service extends BaseService<TestRepository, Test, Long>{
                     sIP = new String(pAlarmer.sDeviceIP).split("\0", 2);
                     newRow[2] = sIP[0];
 
-                    if(strVcaAlarm.dwPicDataLen>0)
-                    {
+                    if (strVcaAlarm.dwPicDataLen > 0) {
                         SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmss");
                         String newName = sf.format(today);
                         FileOutputStream fout;
                         try {
-                            fout = new FileOutputStream("E:\\hkwsPicture\\"+ new String(pAlarmer.sDeviceIP).trim()
-                                    + "wEventTypeEx[" + strVcaAlarm.struRuleInfo.wEventTypeEx + "]_"+ newName +"_vca.jpg");
+                            fout = new FileOutputStream("C:\\Users\\yaoli\\Desktop\\pic\\" + "ch" + strVcaAlarm.struDevInfo.byIvmsChannel +"_"+ newName +"_"+type + ".jpg");
                             //将字节写入文件
                             long offset = 0;
                             ByteBuffer buffers = strVcaAlarm.pImage.getByteBuffer(offset, strVcaAlarm.dwPicDataLen);
-                            byte [] bytes = new byte[strVcaAlarm.dwPicDataLen];
+                            byte[] bytes = new byte[strVcaAlarm.dwPicDataLen];
                             buffers.rewind();
                             buffers.get(bytes);
                             fout.write(bytes);
                             fout.close();
-                        }catch (FileNotFoundException e) {
-                            // TODO Auto-generated catch block
+                        } catch (FileNotFoundException e) {
                             e.printStackTrace();
                         } catch (IOException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                         }
                     }
-
-
-
-
                     break;
-
             }
             return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    //报警撤防
+    public void CloseAlarmChan() {
+        if (lAlarmHandle.intValue() > -1)
+        {
+            if(hCNetSDK.NET_DVR_CloseAlarmChan_V30(lAlarmHandle.intValue()))
+            {
+                lAlarmHandle = new NativeLong(-1);
+            }
         }
     }
 }
