@@ -2,7 +2,10 @@ package com.xinyuan.ms.service;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
-import org.junit.platform.commons.logging.LoggerFactory;
+import com.xinyuan.ms.entity.Test;
+import com.xinyuan.ms.entity.User;
+import com.xinyuan.ms.mapper.TestRepository;
+import com.xinyuan.ms.mapper.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -21,7 +24,7 @@ import java.util.logging.Logger;
 import static com.xinyuan.ms.service.HCNetSDK.COMM_ALARM_RULE;
 
 @Service
-public class test2Service {
+public class test2Service  extends BaseService<TestRepository, Test,Long>{
     static HCNetSDK hCNetSDK = HCNetSDK.INSTANCE;
     static String m_sUsername = "admin";//设备用户名
     static String m_sPassword = "12345ABCDE";//设备密码
@@ -105,6 +108,7 @@ public class test2Service {
             String[] newRow = new String[3];
             Date today = new Date();
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            String format = dateFormat.format(today);
             String[] sIP = new String[2];
             switch (lCommand) {
 
@@ -116,7 +120,10 @@ public class test2Service {
                     pVcaInfo.write(0, pAlarmInfo.getByteArray(0, strVcaAlarm.size()), 0, strVcaAlarm.size());
                     strVcaAlarm.read();
                     String type = "OTHER";
-
+                    Test abc = new Test();
+                    abc.setTime(format);
+                    abc.setChannel(strVcaAlarm.struDevInfo.byIvmsChannel);
+                    abc.setIpAddress(new String(pAlarmer.sDeviceIP).trim());
                     switch (strVcaAlarm.struRuleInfo.wEventTypeEx) {
                         case 41:
                             System.out.println("人员滞留");
@@ -139,7 +146,8 @@ public class test2Service {
                                     "_Dev IP：" + new String(strVcaAlarm.struDevInfo.struDevIP.sIpV4);
                             break;
                     }
-
+                    abc.setType(type.trim());
+                    save(abc);
                     System.out.println(sAlarmType + "     123");
                     newRow[0] = dateFormat.format(today);
                     //报警类型
@@ -153,7 +161,7 @@ public class test2Service {
                         String newName = sf.format(today);
                         FileOutputStream fout;
                         try {
-                            fout = new FileOutputStream("C:\\Users\\yaoli\\Desktop\\pic\\" + "ch" + strVcaAlarm.struDevInfo.byIvmsChannel +"_"+ newName +"_"+type + ".jpg");
+                            fout = new FileOutputStream("E:\\hkwsPicture\\" + "ch" + strVcaAlarm.struDevInfo.byIvmsChannel +"_"+ newName +"_"+type + ".jpg");
                             //将字节写入文件
                             long offset = 0;
                             ByteBuffer buffers = strVcaAlarm.pImage.getByteBuffer(offset, strVcaAlarm.dwPicDataLen);

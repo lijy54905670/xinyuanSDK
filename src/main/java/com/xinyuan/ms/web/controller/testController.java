@@ -1,7 +1,6 @@
 package com.xinyuan.ms.web.controller;
 
 import com.xinyuan.ms.service.test2Service;
-import com.xinyuan.ms.service.testService;
 import com.xinyuan.ms.web.request.LoginRequest;
 import com.xinyuan.ms.web.vo.BasicInfoVo;
 import io.swagger.annotations.Api;

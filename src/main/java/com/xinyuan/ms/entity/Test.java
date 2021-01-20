@@ -21,7 +21,7 @@ public class Test {
 
     @ApiModelProperty(value = "通道号", name = "channel", example = "1")
     @Column(name = "channel")
-    private byte channel;
+    private Byte channel;
 
     @ApiModelProperty(value = "记录时间", name = "time", example = "1")
     @Column(name = "time")
