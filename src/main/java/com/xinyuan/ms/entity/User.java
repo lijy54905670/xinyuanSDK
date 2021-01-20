@@ -51,8 +51,8 @@ public class User implements Serializable {
     private Integer vip;
 
     @ApiModelProperty(value = "消费金额", name = "money", example = "0")
-    @Column(name = "money", columnDefinition = "DOUBLE DEFAULT 0", insertable = false)
-    private Double money;
+    @Column(name = "money", columnDefinition = "float DEFAULT 0", insertable = false)
+    private float money;
 
     @ApiModelProperty(value = "头像", name = "icon", example = "/upload/afd5c1ee-409e-43b2-86b4-b239e0e91fd6.jpg")
     @Column(name = "icon")

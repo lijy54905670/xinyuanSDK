@@ -29,7 +29,7 @@ import java.util.List;
 //SDK接口说明,HCNetSDK.dll
 public interface HCNetSDK extends StdCallLibrary {
 
-    HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("HCNetSDK",
+    HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("C:\\Users\\yaoli\\Desktop\\springBoot-template\\template\\HCNetSDK.dll",
             HCNetSDK.class);
     /***宏定义***/
     //常量
@@ -7207,7 +7207,7 @@ public static class NET_DVR_GPS_DATA extends Structure {
 //播放库函数声明,PlayCtrl.dll
 interface PlayCtrl extends StdCallLibrary
 {
-    PlayCtrl INSTANCE = (PlayCtrl) Native.loadLibrary("../lib/PlayCtrl",
+    PlayCtrl INSTANCE = (PlayCtrl) Native.loadLibrary("C:\\Users\\yaoli\\Desktop\\springBoot-template\\template\\PlayCtrl.dll",
             PlayCtrl.class);
 
     public static final int STREAME_REALTIME = 0;

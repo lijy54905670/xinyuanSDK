@@ -2,7 +2,6 @@ package com.xinyuan.ms.service;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
-import org.junit.platform.commons.logging.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.File;

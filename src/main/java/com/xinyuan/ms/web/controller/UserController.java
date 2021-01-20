@@ -3,7 +3,6 @@ package com.xinyuan.ms.web.controller;
 
 //import com.xinyuan.ms.ClientDemo.ClientDemo;
 import com.xinyuan.ms.service.BasicService;
-import com.xinyuan.ms.service.MemberFlowUploadService;
 import com.xinyuan.ms.web.request.LoginRequest;
 import com.xinyuan.ms.web.vo.AlarmOutVo;
 import com.xinyuan.ms.web.vo.BasicInfoVo;
@@ -30,8 +29,6 @@ public class UserController {
     @Autowired
     BasicService basicService;
 
-    @Autowired
-    MemberFlowUploadService memberFlowUploadService;
 
     @ApiOperation(value = "保存", notes = "保存")
     @RequestMapping(value = "save", method = RequestMethod.POST)
@@ -65,11 +62,6 @@ public class UserController {
         return ResponseEntity.ok(alarmOutVo);
     }
 
-    @ApiOperation(value = "流量测试", notes = "流量测试")
-    @RequestMapping(value = "Test", method = RequestMethod.POST)
-    public void PersonTest(@RequestBody int i) {
-        memberFlowUploadService.initMemberFlowUpload(i);
-    }
 
 
 }
