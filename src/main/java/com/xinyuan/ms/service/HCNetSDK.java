@@ -22,6 +22,9 @@ import com.sun.jna.ptr.ByteByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.ShortByReference;
+import lombok.Data;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -975,6 +978,7 @@ public interface HCNetSDK extends StdCallLibrary {
 }
 
 //DVR设备参数
+  @Data
   public static class NET_DVR_DEVICECFG extends Structure {
         public int dwSize;
         public byte[] sDVRName = new byte[NAME_LEN];     //DVR名称

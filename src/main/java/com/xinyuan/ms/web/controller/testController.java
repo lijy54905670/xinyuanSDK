@@ -24,18 +24,24 @@ public class testController {
     @ApiOperation(value = "保存", notes = "保存")
     @RequestMapping(value = "save1111", method = RequestMethod.POST)
     public ResponseEntity<String> save1() throws InterruptedException {
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    test2Service.initMemberFlowUpload("192.168.2.199");
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        },10*60*5,1000*60);
-
+//        Timer timer = new Timer();
+//        timer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                try {
+//                    test2Service.initMemberFlowUpload("192.168.2.199");
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        },10*60*5,1000*60);
+        test2Service.initMemberFlowUpload("192.168.2.199");
         return ResponseEntity.ok("123");
+    }
+
+    @ApiOperation(value = "停止监听", notes = "停止监听")
+    @RequestMapping(value = "stop", method = RequestMethod.POST)
+    public void stop(){
+        test2Service.CloseAlarmChan();
     }
 }

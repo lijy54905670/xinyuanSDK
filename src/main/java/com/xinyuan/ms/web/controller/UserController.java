@@ -1,10 +1,8 @@
 
 package com.xinyuan.ms.web.controller;
 
-//import com.xinyuan.ms.ClientDemo.ClientDemo;
 import com.xinyuan.ms.service.BasicService;
 import com.xinyuan.ms.web.request.LoginRequest;
-import com.xinyuan.ms.web.vo.AlarmOutVo;
 import com.xinyuan.ms.web.vo.BasicInfoVo;
 import com.xinyuan.ms.web.vo.ChanelVo;
 import io.swagger.annotations.Api;
@@ -30,37 +28,41 @@ public class UserController {
     BasicService basicService;
 
 
-    @ApiOperation(value = "保存", notes = "保存")
-    @RequestMapping(value = "save", method = RequestMethod.POST)
-    public ResponseEntity<BasicInfoVo> save(@RequestBody LoginRequest loginRequest) {
+    @ApiOperation(value = "登录", notes = "登录")
+    @RequestMapping(value = "login", method = RequestMethod.POST)
+    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
         String msg = basicService.login(loginRequest);
+        return ResponseEntity.ok("123");
+    }
+
+    @ApiOperation(value = "获取基本信息", notes = "获取基本信息")
+    @RequestMapping(value = "getBasicCfg", method = RequestMethod.POST)
+    public ResponseEntity<BasicInfoVo> save() {
         BasicInfoVo basicCgf = basicService.getBasicCfg();
         return ResponseEntity.ok(basicCgf);
     }
 
-    @ApiOperation(value = "保存", notes = "保存")
+    @ApiOperation(value = "设置基本信息", notes = "设置基本信息")
     @RequestMapping(value = "save1", method = RequestMethod.POST)
     public ResponseEntity<String> save1(@RequestBody BasicInfoVo basicInfoVo) {
-        String msg = basicService.login(new LoginRequest("192.168.2.200",(short)8000,"admin","xinyuan1,"));
         basicService.setBasicCfg(basicInfoVo);
-        return ResponseEntity.ok(msg);
+        return ResponseEntity.ok("123");
     }
 
     @ApiOperation(value = "通道参数", notes = "通道参数")
     @RequestMapping(value = "save2", method = RequestMethod.POST)
-    public ResponseEntity<ChanelVo> save2(@RequestBody LoginRequest loginRequest) {
-        String msg = basicService.login(loginRequest);
+    public ResponseEntity<ChanelVo> save2() {
         ChanelVo chanel = basicService.getChanel();
         return ResponseEntity.ok(chanel);
     }
 
-    @ApiOperation(value = "报警输出参数", notes = "报警输出参数")
+    /*@ApiOperation(value = "报警输出参数", notes = "报警输出参数")
     @RequestMapping(value = "baojing", method = RequestMethod.POST)
     public ResponseEntity<AlarmOutVo> baojingshuchu(@RequestBody LoginRequest loginRequest) {
         String msg = basicService.login(loginRequest);
         AlarmOutVo alarmOutVo = basicService.showAlarmOutCfg();
         return ResponseEntity.ok(alarmOutVo);
-    }
+    }*/
 
 
 

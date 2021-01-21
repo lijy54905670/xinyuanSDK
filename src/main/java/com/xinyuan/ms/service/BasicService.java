@@ -1,9 +1,7 @@
 package com.xinyuan.ms.service;
 
-import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
-import com.xinyuan.ms.entity.HCNetSDK;
 import com.xinyuan.ms.web.request.LoginRequest;
 import com.xinyuan.ms.web.vo.AlarmOutVo;
 import com.xinyuan.ms.web.vo.BasicInfoVo;
@@ -18,20 +16,37 @@ public class BasicService {
 //            HCNetSDK.class);
 
     HCNetSDK hCNetSDK = HCNetSDK.INSTANCE;
+    com.xinyuan.ms.service.HCNetSDK.NET_DVR_DEVICEINFO_V40 m_strDeviceInfo = new HCNetSDK.NET_DVR_DEVICEINFO_V40();
+    HCNetSDK.NET_DVR_USER_LOGIN_INFO m_strLoginInfo = new HCNetSDK.NET_DVR_USER_LOGIN_INFO();
 
 
-    NativeLong lUserID;
+    int lUserID;
 
     public String login(LoginRequest loginRequest) {
+
+        // 注册设备-登录参数，包括设备地址、登录用户、密码等
+        m_strLoginInfo.sDeviceAddress = new byte[hCNetSDK.NET_DVR_DEV_ADDRESS_MAX_LEN];
+        System.arraycopy(loginRequest.getIp().getBytes(), 0, m_strLoginInfo.sDeviceAddress, 0, loginRequest.getIp().length());
+        m_strLoginInfo.sUserName = new byte[hCNetSDK.NET_DVR_LOGIN_USERNAME_MAX_LEN];
+        System.arraycopy(loginRequest.getUserName().getBytes(), 0, m_strLoginInfo.sUserName, 0,loginRequest.getUserName().length());
+        m_strLoginInfo.sPassword = new byte[hCNetSDK.NET_DVR_LOGIN_PASSWD_MAX_LEN];
+        System.arraycopy(loginRequest.getPwd().getBytes(), 0, m_strLoginInfo.sPassword, 0, loginRequest.getPwd().length());
+        m_strLoginInfo.wPort = loginRequest.getPort();
+        m_strLoginInfo.bUseAsynLogin = false; //是否异步登录：0- 否，1- 是
+        m_strLoginInfo.write();
+
+
+
         hCNetSDK.NET_DVR_Init();
         //设备基本信息
         HCNetSDK.NET_DVR_DEVICEINFO_V30 m_str = new HCNetSDK.NET_DVR_DEVICEINFO_V30();
         System.out.println(m_str);
         //调用登录接口
-        lUserID = hCNetSDK.NET_DVR_Login_V30(loginRequest.getIp(), (short) loginRequest.getPort(), loginRequest.getUserName(), loginRequest.getPwd(), m_str);
+        hCNetSDK.NET_DVR_Login_V40(m_strLoginInfo, m_strDeviceInfo);
+        //lUserID = hCNetSDK.NET_DVR_Login_V40(loginRequest.getIp(), (short) loginRequest.getPort(), loginRequest.getUserName(), loginRequest.getPwd(), m_str);
         System.out.println(1);
-        long userID = lUserID.longValue();
-        if (userID == -1) {
+        //long userID = lUserID.longValue();
+        if (lUserID == -1) {
             System.out.println("登录失败");
             return "登录失败";
         } else {
@@ -52,7 +67,7 @@ public class BasicService {
         Pointer lpPicConfig = m_strDeviceCfg.getPointer();
 
         boolean getDVRConfigSuc = hCNetSDK.NET_DVR_GetDVRConfig(lUserID, HCNetSDK.NET_DVR_GET_DEVICECFG,
-                new NativeLong(0), lpPicConfig, m_strDeviceCfg.size(), ibrBytesReturned);
+                0, lpPicConfig, m_strDeviceCfg.size(), ibrBytesReturned);
 
         m_strDeviceCfg.read();
         if (getDVRConfigSuc != true) {
@@ -193,7 +208,7 @@ public class BasicService {
 
         Pointer lpPicConfig = m_strDeviceCfg.getPointer();
 
-        boolean b = hCNetSDK.NET_DVR_SetDVRConfig(lUserID, HCNetSDK.NET_DVR_SET_DEVICECFG, new NativeLong(0), lpPicConfig, m_strDeviceCfg.size());
+        boolean b = hCNetSDK.NET_DVR_SetDVRConfig(lUserID, HCNetSDK.NET_DVR_SET_DEVICECFG, 0, lpPicConfig, m_strDeviceCfg.size());
 
         m_strDeviceCfg.read();
 
@@ -211,7 +226,7 @@ public class BasicService {
     private HCNetSDK.NET_DVR_PICCFG_V30 m_struPicCfg;//图片参数
     private HCNetSDK.NET_DVR_COMPRESSIONCFG_V30 m_struCompressionCfg;//压缩参数
     private HCNetSDK.NET_DVR_RECORD_V30 m_struRemoteRecCfg;//录像参数
-    private HCNetSDK.NET_DVR_DEVICEINFO_V30 m_strDeviceInfo;//设备信息
+//    private HCNetSDK.NET_DVR_DEVICEINFO_V30 m_strDeviceInfo;//设备信息
     private HCNetSDK.NET_DVR_SHOWSTRING_V30 m_strShowString;//叠加字符参数
     //private NativeLong lUserID;//用户ID
     public javax.swing.JComboBox jComboBoxChannelNumber;
@@ -224,7 +239,7 @@ public class BasicService {
 //    });
 
     public ChanelVo getChanel() {
-        m_strDeviceInfo = new HCNetSDK.NET_DVR_DEVICEINFO_V30();
+        m_strDeviceInfo = new HCNetSDK.NET_DVR_DEVICEINFO_V40();
         jComboBoxChannelNumber = new javax.swing.JComboBox();
         jComboBoxChannelNumber.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -233,17 +248,17 @@ public class BasicService {
         });
         int iChannelNumber = -1;
         int iIndex = jComboBoxChannelNumber.getSelectedIndex();
-        if ((iIndex < m_strDeviceInfo.byChanNum) && (iIndex >= -1)) {
-            iChannelNumber = iIndex + m_strDeviceInfo.byStartChan;
+        if ((iIndex < m_strDeviceInfo.struDeviceV30.byChanNum) && (iIndex >= -1)) {
+            iChannelNumber = iIndex + m_strDeviceInfo.struDeviceV30.byStartChan;
         } else {
-            iChannelNumber = 32 + (iIndex - m_strDeviceInfo.byChanNum) + m_strDeviceInfo.byStartChan;
+            iChannelNumber = 32 + (iIndex - m_strDeviceInfo.struDeviceV30.byChanNum) + m_strDeviceInfo.struDeviceV30.byStartChan;
         }
         IntByReference ibrBytesReturned = new IntByReference(0);//获取图片参数
         m_struPicCfg = new HCNetSDK.NET_DVR_PICCFG_V30();
         m_struPicCfg.write();
         Pointer lpPicConfig = m_struPicCfg.getPointer();
         boolean getDVRConfigSuc = hCNetSDK.NET_DVR_GetDVRConfig(lUserID, HCNetSDK.NET_DVR_GET_PICCFG_V30,
-                new NativeLong(1), lpPicConfig, m_struPicCfg.size(), ibrBytesReturned);
+                1, lpPicConfig, m_struPicCfg.size(), ibrBytesReturned);
         m_struPicCfg.read();
         if (getDVRConfigSuc != true) {
             JOptionPane.showMessageDialog(null, "获取图片参数失败");
@@ -256,7 +271,7 @@ public class BasicService {
         m_struCompressionCfg.write();
         lpPicConfig = m_struCompressionCfg.getPointer();
         getDVRConfigSuc = hCNetSDK.NET_DVR_GetDVRConfig(lUserID, HCNetSDK.NET_DVR_GET_COMPRESSCFG_V30,
-                new NativeLong(1), lpPicConfig, m_struCompressionCfg.size(), ibrBytesReturned);
+                1, lpPicConfig, m_struCompressionCfg.size(), ibrBytesReturned);
         m_struCompressionCfg.read();
         if (getDVRConfigSuc != true) {
             JOptionPane.showMessageDialog(null, "获取压缩参数失败");
@@ -269,7 +284,7 @@ public class BasicService {
         m_struRemoteRecCfg.write();
         lpPicConfig = m_struRemoteRecCfg.getPointer();
         getDVRConfigSuc = hCNetSDK.NET_DVR_GetDVRConfig(lUserID, HCNetSDK.NET_DVR_GET_RECORDCFG_V30,
-                new NativeLong(1), lpPicConfig, m_struRemoteRecCfg.size(), ibrBytesReturned);
+                1, lpPicConfig, m_struRemoteRecCfg.size(), ibrBytesReturned);
         m_struRemoteRecCfg.read();
         if (getDVRConfigSuc != true) {
             System.out.println(hCNetSDK.NET_DVR_GetLastError());
@@ -345,7 +360,7 @@ public class BasicService {
         m_struAlarmOutCfg.write();
         Pointer lpConfig = m_struAlarmOutCfg.getPointer();
         boolean getDVRConfigSuc = hCNetSDK.NET_DVR_GetDVRConfig(lUserID, HCNetSDK.NET_DVR_GET_ALARMOUTCFG_V30,
-                new NativeLong(jComboBoxAlarmOutChannel.getSelectedIndex()), lpConfig, m_struAlarmOutCfg.size(), ibrBytesReturned);
+                jComboBoxAlarmOutChannel.getSelectedIndex(), lpConfig, m_struAlarmOutCfg.size(), ibrBytesReturned);
         m_struAlarmOutCfg.read();
         if (getDVRConfigSuc != true) {
             JOptionPane.showMessageDialog(null, "获取报警输出参数失败");
