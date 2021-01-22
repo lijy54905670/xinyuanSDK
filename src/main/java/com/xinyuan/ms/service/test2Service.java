@@ -2,10 +2,10 @@ package com.xinyuan.ms.service;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.platform.commons.logging.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,9 +32,6 @@ public class test2Service {
     public int lListenHandle;//报警监听句柄
     public NativeLong RemoteConfig;
     public static int code = 5;
-    FMSGCallBack fMSFCallBack;//回调函数
-
-    HCNetSDK.NET_DVR_IPPARACFG m_strIpparaCfg;//IP参数
 
 
     public void initMemberFlowUpload(String m_sDeviceIP) throws InterruptedException {
@@ -127,7 +124,10 @@ public class test2Service {
                     pVcaInfo.write(0, pAlarmInfo.getByteArray(0, strVcaAlarm.size()), 0, strVcaAlarm.size());
                     strVcaAlarm.read();
                     String type = "OTHER";
-
+                    Test abc = new Test();
+                    abc.setTime(format);
+                    abc.setChannel(strVcaAlarm.struDevInfo.byIvmsChannel);
+                    abc.setIpAddress(new String(pAlarmer.sDeviceIP).trim());
                     switch (strVcaAlarm.struRuleInfo.wEventTypeEx) {
                         case 41:
                             System.out.println("人员滞留");
@@ -150,7 +150,8 @@ public class test2Service {
                                     "_Dev IP：" + new String(strVcaAlarm.struDevInfo.struDevIP.sIpV4);
                             break;
                     }
-
+                    abc.setType(type.trim());
+                    save(abc);
                     System.out.println(sAlarmType + "     123");
                     newRow[0] = dateFormat.format(today);
                     //报警类型
@@ -470,19 +471,8 @@ public class test2Service {
             }
             if (iPos == 100)        //end download
             {
-                hCNetSDK.NET_DVR_StopGetFile(m_lDownloadHandle);
-                m_lDownloadHandle = -1;
-                System.out.println("下载成功");
-                Downloadtimer.cancel();
-            }
-            if (iPos > 100)                //download exception for network problems or DVR hasten
-            {
-                hCNetSDK.NET_DVR_StopGetFile(m_lDownloadHandle);
-                System.out.println( "由于网络原因或DVR忙,下载异常终止");
-                m_lDownloadHandle = -1;
-                Downloadtimer.cancel();
+                lAlarmHandle = new NativeLong(-1);
             }
         }
     }
-
 }
