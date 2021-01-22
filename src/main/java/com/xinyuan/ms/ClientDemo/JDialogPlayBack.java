@@ -621,9 +621,9 @@ import javax.swing.table.DefaultTableModel;
             //获取文件名
             DefaultTableModel FileTableModel = ((DefaultTableModel) jTableFile.getModel());
             String sFileName = FileTableModel.getValueAt(jTableFile.getSelectedRow(), 0).toString();
-
+            String downloadPath = "C:\\Users\\yaoli\\Desktop\\download\\" +sFileName+ ".mp4";
             //暂且将文件名作为保存的名字
-            m_lDownloadHandle = hCNetSDK.NET_DVR_GetFileByName(m_lUserID, sFileName, sFileName);
+            m_lDownloadHandle = hCNetSDK.NET_DVR_GetFileByName(m_lUserID, sFileName, downloadPath);
             if (m_lDownloadHandle.intValue() >= 0)
             {
                 hCNetSDK.NET_DVR_PlayBackControl(m_lDownloadHandle, HCNetSDK.NET_DVR_PLAYSTART, 0, null);
