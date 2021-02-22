@@ -42,7 +42,7 @@ public class BasicService {
         HCNetSDK.NET_DVR_DEVICEINFO_V30 m_str = new HCNetSDK.NET_DVR_DEVICEINFO_V30();
         System.out.println(m_str);
         //调用登录接口
-        hCNetSDK.NET_DVR_Login_V40(m_strLoginInfo, m_strDeviceInfo);
+        lUserID = hCNetSDK.NET_DVR_Login_V40(m_strLoginInfo, m_strDeviceInfo);
         //lUserID = hCNetSDK.NET_DVR_Login_V40(loginRequest.getIp(), (short) loginRequest.getPort(), loginRequest.getUserName(), loginRequest.getPwd(), m_str);
         System.out.println(1);
         //long userID = lUserID.longValue();

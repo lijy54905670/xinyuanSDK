@@ -2,14 +2,9 @@ package com.xinyuan.ms.service;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
-import org.junit.platform.commons.logging.LoggerFactory;
+import com.sun.jna.ptr.IntByReference;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -18,23 +13,21 @@ import java.util.Timer;
 import static com.xinyuan.ms.service.HCNetSDK.*;
 
 @Service
-public class test2Service {
+public class FunctionService {
 
     @Autowired
     BasicService basicService;
 
     static HCNetSDK hCNetSDK = HCNetSDK.INSTANCE;
-    static String m_sUsername = "admin";//设备用户名
-    static String m_sPassword = "12345ABCDE";//设备密码
-    static short m_sPort = 8000;//端口号，这是默认的
-    public int lUserID;//用户句柄
+
     public int lAlarmHandle;//报警布防句柄
     public int lListenHandle;//报警监听句柄
-    public NativeLong RemoteConfig;
     public static int code = 5;
+    FMSGCallBack fMSFCallBack;
 
 
-    public void initMemberFlowUpload(String m_sDeviceIP) throws InterruptedException {
+    public void initMemberFlowUpload() throws InterruptedException {
+        int lUserID = basicService.lUserID;//用户句柄
         // 初始化
         Boolean flag = hCNetSDK.NET_DVR_Init();
         if (flag) {
@@ -45,32 +38,10 @@ public class test2Service {
         //设置连接时间与重连时间
         hCNetSDK.NET_DVR_SetConnectTime(20000, 1);
         hCNetSDK.NET_DVR_SetReconnect(100000, true);
-        //设备信息, 输出参数
-        HCNetSDK.NET_DVR_DEVICEINFO_V40 m_strDeviceInfo = new HCNetSDK.NET_DVR_DEVICEINFO_V40();
-        HCNetSDK.NET_DVR_USER_LOGIN_INFO m_strLoginInfo = new HCNetSDK.NET_DVR_USER_LOGIN_INFO();
-        // 注册设备-登录参数，包括设备地址、登录用户、密码等
-        m_strLoginInfo.sDeviceAddress = new byte[hCNetSDK.NET_DVR_DEV_ADDRESS_MAX_LEN];
-        System.arraycopy(m_sDeviceIP.getBytes(), 0, m_strLoginInfo.sDeviceAddress, 0, m_sDeviceIP.length());
-        m_strLoginInfo.sUserName = new byte[hCNetSDK.NET_DVR_LOGIN_USERNAME_MAX_LEN];
-        System.arraycopy(m_sUsername.getBytes(), 0, m_strLoginInfo.sUserName, 0, m_sUsername.length());
-        m_strLoginInfo.sPassword = new byte[hCNetSDK.NET_DVR_LOGIN_PASSWD_MAX_LEN];
-        System.arraycopy(m_sPassword.getBytes(), 0, m_strLoginInfo.sPassword, 0, m_sPassword.length());
-        m_strLoginInfo.wPort = m_sPort;
-        m_strLoginInfo.bUseAsynLogin = false; //是否异步登录：0- 否，1- 是
-        m_strLoginInfo.write();
-
-        //设备信息, 输出参数
-        lUserID = hCNetSDK.NET_DVR_Login_V40(m_strLoginInfo, m_strDeviceInfo);
-        if (lUserID < 0) {
-            System.out.println("hCNetSDK.NET_DVR_Login_V30()  " + "\n" + hCNetSDK.NET_DVR_GetErrorMsg(null));
-            hCNetSDK.NET_DVR_Cleanup();
-            return;
-        }
 
         if (fMSFCallBack == null) {
             fMSFCallBack = new FMSGCallBack();
         }
-
 
         //设置报警回调函数-------------------------------------------------------------
         if (!hCNetSDK.NET_DVR_SetDVRMessageCallBack_V30(fMSFCallBack, null)) {
@@ -106,89 +77,6 @@ public class test2Service {
         }
     }
 
-  /*  public boolean MsesGCallBack(int lCommand, HCNetSDK.NET_DVR_ALARMER pAlarmer, Pointer pAlarmInfo, int dwBufLen, Pointer pUser) {
-        System.out.println("监听开始抓拍");
-        try {
-            String sAlarmType = new String();
-            String[] newRow = new String[3];
-            Date today = new Date();
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-            String[] sIP = new String[2];
-            switch (lCommand) {
-
-                case COMM_ALARM_RULE:    //行为分析信息上传
-                    System.out.println("抓拍成功！");
-                    HCNetSDK.NET_VCA_RULE_ALARM strVcaAlarm = new HCNetSDK.NET_VCA_RULE_ALARM();
-                    strVcaAlarm.write();
-                    Pointer pVcaInfo = strVcaAlarm.getPointer();
-                    pVcaInfo.write(0, pAlarmInfo.getByteArray(0, strVcaAlarm.size()), 0, strVcaAlarm.size());
-                    strVcaAlarm.read();
-                    String type = "OTHER";
-                    Test abc = new Test();
-                    abc.setTime(format);
-                    abc.setChannel(strVcaAlarm.struDevInfo.byIvmsChannel);
-                    abc.setIpAddress(new String(pAlarmer.sDeviceIP).trim());
-                    switch (strVcaAlarm.struRuleInfo.wEventTypeEx) {
-                        case 41:
-                            System.out.println("人员滞留");
-                            type = "RETENTION";
-                            break;
-                        case 15:
-                            System.out.println("人员离岗");
-                            type = "ABSENCE";
-                            break;
-                        case 1:
-                            System.out.println("人员越界");
-                            type = "LINEDETECT";
-                            break;
-                        default:
-                            sAlarmType = sAlarmType + new String("：其他行为分析报警，事件类型：")
-                                    + strVcaAlarm.struRuleInfo.wEventTypeEx +
-                                    "_wPort:" + strVcaAlarm.struDevInfo.wPort +
-                                    "_byChannel:" + strVcaAlarm.struDevInfo.byChannel +
-                                    "_byIvmsChannel:" + strVcaAlarm.struDevInfo.byIvmsChannel +
-                                    "_Dev IP：" + new String(strVcaAlarm.struDevInfo.struDevIP.sIpV4);
-                            break;
-                    }
-                    abc.setType(type.trim());
-                    save(abc);
-                    System.out.println(sAlarmType + "     123");
-                    newRow[0] = dateFormat.format(today);
-                    //报警类型
-                    newRow[1] = sAlarmType;
-                    //报警设备IP地址
-                    sIP = new String(pAlarmer.sDeviceIP).split("\0", 2);
-                    newRow[2] = sIP[0];
-
-                    if (strVcaAlarm.dwPicDataLen > 0) {
-                        SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmss");
-                        String newName = sf.format(today);
-                        FileOutputStream fout;
-                        try {
-                            fout = new FileOutputStream("C:\\Users\\yaoli\\Desktop\\pic\\" + "ch" + strVcaAlarm.struDevInfo.byIvmsChannel +"_"+ newName +"_"+type + ".jpg");
-                            //将字节写入文件
-                            long offset = 0;
-                            ByteBuffer buffers = strVcaAlarm.pImage.getByteBuffer(offset, strVcaAlarm.dwPicDataLen);
-                            byte[] bytes = new byte[strVcaAlarm.dwPicDataLen];
-                            buffers.rewind();
-                            buffers.get(bytes);
-                            fout.write(bytes);
-                            fout.close();
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-            }
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-    */
 
     //报警回调函数
     public class FMSGCallBack implements HCNetSDK.FMSGCallBack {
@@ -243,26 +131,26 @@ public class test2Service {
                         sIP = new String(pAlarmer.sDeviceIP).split("\0", 2);
                         newRow[2] = sIP[0];
 
-                        if (strVcaAlarm.dwPicDataLen > 0) {
-                            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmss");
-                            String newName = sf.format(today);
-                            FileOutputStream fout;
-                            try {
-                                fout = new FileOutputStream("C:\\Users\\yaoli\\Desktop\\pic\\" + "ch" + strVcaAlarm.struDevInfo.byIvmsChannel + "_" + newName + "_" + type + ".jpg");
-                                //将字节写入文件
-                                long offset = 0;
-                                ByteBuffer buffers = strVcaAlarm.pImage.getByteBuffer(offset, strVcaAlarm.dwPicDataLen);
-                                byte[] bytes = new byte[strVcaAlarm.dwPicDataLen];
-                                buffers.rewind();
-                                buffers.get(bytes);
-                                fout.write(bytes);
-                                fout.close();
-                            } catch (FileNotFoundException e) {
-                                e.printStackTrace();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
+//                        if (strVcaAlarm.dwPicDataLen > 0) {
+//                            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmss");
+//                            String newName = sf.format(today);
+//                            FileOutputStream fout;
+//                            try {
+//                                fout = new FileOutputStream("C:\\Users\\yaoli\\Desktop\\pic\\" + "ch" + strVcaAlarm.struDevInfo.byIvmsChannel + "_" + newName + "_" + type + ".jpg");
+//                                //将字节写入文件
+//                                long offset = 0;
+//                                ByteBuffer buffers = strVcaAlarm.pImage.getByteBuffer(offset, strVcaAlarm.dwPicDataLen);
+//                                byte[] bytes = new byte[strVcaAlarm.dwPicDataLen];
+//                                buffers.rewind();
+//                                buffers.get(bytes);
+//                                fout.write(bytes);
+//                                fout.close();
+//                            } catch (FileNotFoundException e) {
+//                                e.printStackTrace();
+//                            } catch (IOException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
                         break;
                 }
             } catch (Exception e) {
@@ -286,7 +174,7 @@ public class test2Service {
 
 
     int m_iTreeNodeNum = 0;//通道树节点数目
-
+    NET_DVR_IPPARACFG  m_strIpparaCfg;//IP参数
 
     /**
      * 建立设备通道树
@@ -294,7 +182,7 @@ public class test2Service {
      * @return
      */
     public List<Map<String, Object>> CreateDeviceTree() {
-
+        int lUserID = basicService.lUserID;//用户句柄
         IntByReference ibrBytesReturned = new IntByReference(0);//获取IP接入配置参数
         m_strIpparaCfg = new HCNetSDK.NET_DVR_IPPARACFG();
 
@@ -371,6 +259,7 @@ public class test2Service {
         m_strFilecond.dwFileType = 0;//文件类型
         m_strFilecond.dwIsLocked = 0xff;
         m_strFilecond.dwUseCardNo = 0;
+        int lUserID = basicService.lUserID;//用户句柄
 
         int lFindFile = hCNetSDK.NET_DVR_FindFile_V30(lUserID, m_strFilecond);
         HCNetSDK.NET_DVR_FINDDATA_V30 strFile = new HCNetSDK.NET_DVR_FINDDATA_V30();
@@ -411,11 +300,11 @@ public class test2Service {
 
                 int i;
             } else {
-                if (lnext == com.xinyuan.ms.ClientDemo.HCNetSDK.NET_DVR_ISFINDING) {//搜索中
+                if (lnext == HCNetSDK.NET_DVR_ISFINDING) {//搜索中
                     System.out.println("搜索中");
                     continue;
                 } else {
-                    if (lnext == com.xinyuan.ms.ClientDemo.HCNetSDK.NET_DVR_FILE_NOFIND) {
+                    if (lnext == HCNetSDK.NET_DVR_FILE_NOFIND) {
                         System.out.println("没有找到文件");
                         return list;
                     } else {
@@ -439,6 +328,7 @@ public class test2Service {
      * 下载文件
      */
     public void download(String sFileName) {
+        int lUserID = basicService.lUserID;//用户句柄
         if (m_lDownloadHandle == -1) {
             String downloadPath = "C:\\Users\\yaoli\\Desktop\\download\\" + sFileName + ".mp4";
             //暂且将文件名作为保存的名字
@@ -471,7 +361,17 @@ public class test2Service {
             }
             if (iPos == 100)        //end download
             {
-                lAlarmHandle = new NativeLong(-1);
+                hCNetSDK.NET_DVR_StopGetFile(m_lDownloadHandle);
+                System.out.println("下载成功");
+                m_lDownloadHandle = -1;
+                Downloadtimer.cancel();
+            }
+            if (iPos > 100)		        //download exception for network problems or DVR hasten
+            {
+                hCNetSDK.NET_DVR_StopGetFile(m_lDownloadHandle);
+                System.out.println("由于网络原因或DVR忙,下载异常终止");
+                m_lDownloadHandle = -1;
+                Downloadtimer.cancel();
             }
         }
     }

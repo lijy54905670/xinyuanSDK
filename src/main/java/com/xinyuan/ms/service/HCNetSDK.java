@@ -25,12 +25,15 @@ import com.sun.jna.ptr.ShortByReference;
 import lombok.Data;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 //SDK接口说明,HCNetSDK.dll
 public interface HCNetSDK extends StdCallLibrary {
+
+
 
     HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("C:\\Users\\yaoli\\Desktop\\springBoot-template\\template\\HCNetSDK.dll",
             HCNetSDK.class);

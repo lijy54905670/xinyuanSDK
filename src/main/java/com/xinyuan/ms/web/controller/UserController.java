@@ -32,26 +32,26 @@ public class UserController {
     @RequestMapping(value = "login", method = RequestMethod.POST)
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
         String msg = basicService.login(loginRequest);
-        return ResponseEntity.ok("123");
+        return ResponseEntity.ok(msg);
     }
 
     @ApiOperation(value = "获取基本信息", notes = "获取基本信息")
     @RequestMapping(value = "getBasicCfg", method = RequestMethod.POST)
-    public ResponseEntity<BasicInfoVo> save() {
+    public ResponseEntity<BasicInfoVo> getBasicCfg() {
         BasicInfoVo basicCgf = basicService.getBasicCfg();
         return ResponseEntity.ok(basicCgf);
     }
 
     @ApiOperation(value = "设置基本信息", notes = "设置基本信息")
-    @RequestMapping(value = "save1", method = RequestMethod.POST)
-    public ResponseEntity<String> save1(@RequestBody BasicInfoVo basicInfoVo) {
+    @RequestMapping(value = "setBasicCfg", method = RequestMethod.POST)
+    public ResponseEntity<String> setBasicCfg(@RequestBody BasicInfoVo basicInfoVo) {
         basicService.setBasicCfg(basicInfoVo);
         return ResponseEntity.ok("123");
     }
 
     @ApiOperation(value = "通道参数", notes = "通道参数")
-    @RequestMapping(value = "save2", method = RequestMethod.POST)
-    public ResponseEntity<ChanelVo> save2() {
+    @RequestMapping(value = "getChanel", method = RequestMethod.POST)
+    public ResponseEntity<ChanelVo> getChanel() {
         ChanelVo chanel = basicService.getChanel();
         return ResponseEntity.ok(chanel);
     }
