@@ -5,6 +5,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.*;
 
 @Api(description = "功能")
-@RestController
+@Controller
 @RequestMapping("/function")
 public class FunctionController {
 
@@ -22,15 +23,16 @@ public class FunctionController {
 
     @ApiOperation(value = "开始布防监听", notes = "开始布防监听")
     @RequestMapping(value = "start", method = RequestMethod.POST)
-    public ResponseEntity<String> save1() throws InterruptedException {
+    public String save1() throws InterruptedException {
         functionService.initMemberFlowUpload();
-        return ResponseEntity.ok("123");
+        return "tingzhi";
     }
 
     @ApiOperation(value = "停止监听", notes = "停止监听")
     @RequestMapping(value = "stop", method = RequestMethod.POST)
-    public void stop(){
+    public String stop(){
         functionService.CloseAlarmChan();
+        return "denglu";
     }
 
     @ApiOperation(value = "设备树", notes = "设备树")
@@ -57,5 +59,11 @@ public class FunctionController {
     @RequestMapping(value = "downloadByTime", method = RequestMethod.POST)
     public void downloadByTime(@RequestBody String fileName){
         functionService.download(fileName);
+    }
+
+    @ApiOperation(value = "预览", notes = "预览")
+    @RequestMapping(value = "yulan", method = RequestMethod.POST)
+    public void show()  {
+        functionService.show();
     }
 }

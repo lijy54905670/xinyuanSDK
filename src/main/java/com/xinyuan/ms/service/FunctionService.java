@@ -1,10 +1,19 @@
 package com.xinyuan.ms.service;
 
+import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
+import com.sun.jna.examples.win32.W32API;
+import com.sun.jna.ptr.ByteByReference;
 import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.NativeLongByReference;
+import com.xinyuan.ms.Utils.HexUtils;
+import com.xinyuan.ms.entity.Test;
+import com.xinyuan.ms.mapper.TestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import javax.swing.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -13,7 +22,7 @@ import java.util.Timer;
 import static com.xinyuan.ms.service.HCNetSDK.*;
 
 @Service
-public class FunctionService {
+public class FunctionService extends BaseService<TestRepository, Test, Long> {
 
     @Autowired
     BasicService basicService;
@@ -21,9 +30,12 @@ public class FunctionService {
     static HCNetSDK hCNetSDK = HCNetSDK.INSTANCE;
 
     public int lAlarmHandle;//报警布防句柄
+    Integer lPreviewHandle;
     public int lListenHandle;//报警监听句柄
+    HCNetSDK.NET_DVR_CLIENTINFO m_strClientInfo;//用户参数
     public static int code = 5;
     FMSGCallBack fMSFCallBack;
+    FRealDataCallBack fRealDataCallBack;
 
 
     public void initMemberFlowUpload() throws InterruptedException {
@@ -77,6 +89,50 @@ public class FunctionService {
         }
     }
 
+    public void show() {
+        int lUserID = basicService.lUserID;
+        if (lUserID == -1) {
+            System.out.println("请先注册!");
+        }
+
+        //如果预览窗口没打开,不在预览
+
+            //获取通道号
+            int iChannelNum = 1;//通道号
+            if (iChannelNum == -1) {
+                System.out.println("通道号不存在");;
+                return;
+            }
+
+            m_strClientInfo = new HCNetSDK.NET_DVR_CLIENTINFO();
+            m_strClientInfo.lChannel = iChannelNum;
+            if (fRealDataCallBack == null) {
+                fRealDataCallBack = new FRealDataCallBack();
+            }
+
+            //在此判断是否回调预览,0,不回调 1 回调
+
+                m_strClientInfo.hPlayWnd = null;
+                lPreviewHandle = hCNetSDK.NET_DVR_RealPlay_V30(lUserID,
+                        m_strClientInfo, fRealDataCallBack, null, true);
+
+            long previewSucValue = lPreviewHandle.longValue();
+            //预览失败时:
+            if (previewSucValue == -1) {
+                System.out.println("预览失败！");
+                return;
+            }
+
+            //预览成功的操作
+
+            //显示云台控制窗口
+
+        }
+
+        //如果在预览,停止预览,关闭窗口
+
+
+
 
     //报警回调函数
     public class FMSGCallBack implements HCNetSDK.FMSGCallBack {
@@ -88,6 +144,9 @@ public class FunctionService {
                 String[] newRow = new String[3];
                 Date today = new Date();
                 DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+                String format = dateFormat.format(today);
+                Test test = new Test();
+                test.setTime(format);
                 String[] sIP = new String[2];
                 switch (lCommand) {
 
@@ -99,7 +158,8 @@ public class FunctionService {
                         pVcaInfo.write(0, pAlarmInfo.getByteArray(0, strVcaAlarm.size()), 0, strVcaAlarm.size());
                         strVcaAlarm.read();
                         String type = "OTHER";
-
+                        test.setIpAddress(new String(strVcaAlarm.struDevInfo.struDevIP.sIpV4).trim());
+                        test.setChannel(strVcaAlarm.struDevInfo.byChannel);
                         switch (strVcaAlarm.struRuleInfo.wEventTypeEx) {
                             case 41:
                                 System.out.println("人员滞留");
@@ -122,7 +182,8 @@ public class FunctionService {
                                         "_Dev IP：" + new String(strVcaAlarm.struDevInfo.struDevIP.sIpV4);
                                 break;
                         }
-
+                        test.setType(type.trim());
+                        save(test);
                         System.out.println(sAlarmType + "     123");
                         newRow[0] = dateFormat.format(today);
                         //报警类型
@@ -174,7 +235,7 @@ public class FunctionService {
 
 
     int m_iTreeNodeNum = 0;//通道树节点数目
-    NET_DVR_IPPARACFG  m_strIpparaCfg;//IP参数
+    NET_DVR_IPPARACFG m_strIpparaCfg;//IP参数
 
     /**
      * 建立设备通道树
@@ -346,7 +407,7 @@ public class FunctionService {
 
     /**
      * 下载进度
-     * */
+     */
     class DownloadTask extends java.util.TimerTask {
         //定时器函数
         @Override
@@ -366,7 +427,7 @@ public class FunctionService {
                 m_lDownloadHandle = -1;
                 Downloadtimer.cancel();
             }
-            if (iPos > 100)		        //download exception for network problems or DVR hasten
+            if (iPos > 100)                //download exception for network problems or DVR hasten
             {
                 hCNetSDK.NET_DVR_StopGetFile(m_lDownloadHandle);
                 System.out.println("由于网络原因或DVR忙,下载异常终止");
@@ -375,4 +436,44 @@ public class FunctionService {
             }
         }
     }
-}
+    static PlayCtrl playControl = PlayCtrl.INSTANCE;
+    IntByReference m_lPort;//回调预览时播放库端口指针
+    public class FRealDataCallBack implements HCNetSDK.FRealDataCallBack_V30 {
+        @Override
+        public void invoke(int lRealHandle, int dwDataType, ByteByReference pBuffer, int dwBufSize, Pointer pUser) {
+            byte[] bytes = ref2Bytes(pBuffer,dwBufSize);
+            switch (dwDataType) {
+                case HCNetSDK.NET_DVR_SYSHEAD: //系统头
+
+                    if (!playControl.PlayM4_GetPort(m_lPort)) //获取播放库未使用的通道号
+                    {
+                        break;
+                    }
+
+                    if (dwBufSize > 0) {
+                        if (!playControl.PlayM4_SetStreamOpenMode(m_lPort.getValue(), PlayCtrl.STREAME_REALTIME))  //设置实时流播放模式
+                        {
+                            break;
+                        }
+
+                        if (!playControl.PlayM4_OpenStream(m_lPort.getValue(), pBuffer, dwBufSize, 1024 * 1024)) //打开流接口
+                        {
+                            break;
+                        }
+                        
+                    }
+                case HCNetSDK.NET_DVR_STREAMDATA:   //码流数据
+                    System.out.println("++++++++++++++++++++++++++");
+                    System.out.println(dwBufSize);
+                    System.out.println("--------------------------");
+            }
+            System.out.println(HexUtils.bytes2Hex(bytes));
+            System.out.println("****************************");
+        }
+        public byte[] ref2Bytes(ByteByReference buf, int dwBufSize){
+            return buf.getPointer().getByteArray(0,dwBufSize);//通过字节指针获取指定长度的字节数组
+        }
+        }
+        //预览回调
+
+    }
