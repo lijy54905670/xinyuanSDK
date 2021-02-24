@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -26,6 +27,8 @@ public class FunctionService extends BaseService<TestRepository, Test, Long> {
 
     @Autowired
     BasicService basicService;
+    @Autowired
+    WebSocketServer webSocketServer;
 
     static HCNetSDK hCNetSDK = HCNetSDK.INSTANCE;
 
@@ -76,6 +79,11 @@ public class FunctionService extends BaseService<TestRepository, Test, Long> {
             return;
         }
         System.out.println("布防成功,开始监测抓拍");
+        try {
+            webSocketServer.BroadCastInfo("布防成功,开始监测抓拍");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         //启动监听--------------------------------------------------------------------
         int iListenPort = 8000;
@@ -140,6 +148,11 @@ public class FunctionService extends BaseService<TestRepository, Test, Long> {
         public void invoke(int lCommand, HCNetSDK.NET_DVR_ALARMER pAlarmer, Pointer pAlarmInfo, int dwBufLen, Pointer pUser) {
             System.out.println("监听开始抓拍");
             try {
+                webSocketServer.BroadCastInfo("监听开始抓拍");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
                 String sAlarmType = new String();
                 String[] newRow = new String[3];
                 Date today = new Date();
@@ -152,6 +165,11 @@ public class FunctionService extends BaseService<TestRepository, Test, Long> {
 
                     case COMM_ALARM_RULE:    //行为分析信息上传
                         System.out.println("抓拍成功！");
+                        try {
+                            webSocketServer.BroadCastInfo("抓拍成功！");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         HCNetSDK.NET_VCA_RULE_ALARM strVcaAlarm = new HCNetSDK.NET_VCA_RULE_ALARM();
                         strVcaAlarm.write();
                         Pointer pVcaInfo = strVcaAlarm.getPointer();
@@ -163,14 +181,29 @@ public class FunctionService extends BaseService<TestRepository, Test, Long> {
                         switch (strVcaAlarm.struRuleInfo.wEventTypeEx) {
                             case 41:
                                 System.out.println("人员滞留");
+                                try {
+                                    webSocketServer.BroadCastInfo("人员滞留");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                                 type = "RETENTION";
                                 break;
                             case 15:
                                 System.out.println("人员离岗");
+                                try {
+                                    webSocketServer.BroadCastInfo("人员离岗");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                                 type = "ABSENCE";
                                 break;
                             case 1:
                                 System.out.println("人员越界");
+                                try {
+                                    webSocketServer.BroadCastInfo("人员越界");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                                 type = "LINEDETECT";
                                 break;
                             default:
@@ -180,6 +213,11 @@ public class FunctionService extends BaseService<TestRepository, Test, Long> {
                                         "_byChannel:" + strVcaAlarm.struDevInfo.byChannel +
                                         "_byIvmsChannel:" + strVcaAlarm.struDevInfo.byIvmsChannel +
                                         "_Dev IP：" + new String(strVcaAlarm.struDevInfo.struDevIP.sIpV4);
+                                try {
+                                    webSocketServer.BroadCastInfo("其他行为分析报警");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                                 break;
                         }
                         test.setType(type.trim());

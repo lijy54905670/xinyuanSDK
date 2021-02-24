@@ -25,7 +25,7 @@ public class FunctionController {
     @RequestMapping(value = "start", method = RequestMethod.POST)
     public String save1() throws InterruptedException {
         functionService.initMemberFlowUpload();
-        return "tingzhi";
+        return "jianting";
     }
 
     @ApiOperation(value = "停止监听", notes = "停止监听")
